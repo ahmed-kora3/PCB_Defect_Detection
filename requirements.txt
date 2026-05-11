@@ -1,0 +1,12 @@
+# TensorFlow: pin 2.15.x on Windows — 2.16+ often hits DLL init failures
+# (VC++ runtime / oneDNN / CPU). Use 2.15.1 unless you need a newer stack.
+tensorflow==2.15.1
+opencv-python
+matplotlib
+numpy>=1.23.5,<2.0.0
+pandas
+scikit-learn
+seaborn
+pillow
+streamlit
+pydot>=2.0

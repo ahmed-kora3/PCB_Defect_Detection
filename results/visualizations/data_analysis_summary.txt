@@ -1,0 +1,22 @@
+=== Class imbalance analysis ===
+Total defect instances (annotations): 21664
+Majority class: mouse_bite (3684 instances)
+Minority class: short (3508 instances)
+Max/min instance ratio: 1.05
+Balance score (normalized entropy, 1=balanced): 1.000
+
+If imbalance_ratio is large, use class_weight in training (enabled by default in train.py).
+
+Unique images (all splits): 9776
+
+Images per class:
+  missing_hole: 1668
+  mouse_bite: 1701
+  open_circuit: 1586
+  short: 1582
+  spur: 1609
+  spurious_copper: 1630
+
+Saved:
+  results\visualizations\class_distribution.png
+  results\visualizations\random_pcb_grid_with_boxes.png

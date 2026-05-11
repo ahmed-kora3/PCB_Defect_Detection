@@ -1,0 +1,6 @@
+# Model comparison
+
+| Model | Test accuracy | Best val accuracy | F1 (weighted) | Parameters | Train time (s) |
+| --- | --- | --- | --- | --- | --- |
+| Scratch CNN (Functional) | 0.99398 | 0.99723 | 0.99398 | 1665702 | 21509.41 |
+| Transfer (MobileNetV2) | 0.95459 | 0.96488 | 0.95459 | 2422726 | 10667.39 |
