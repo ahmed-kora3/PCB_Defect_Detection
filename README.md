@@ -1,124 +1,188 @@
 # PCB Defect Detection & Classification
 
-End-to-end **production-style** PCB defect AI: multi-class classification on **YOLO-cropped** patches, **custom Functional CNN**, **transfer learning** (MobileNetV2, **EfficientNetB0**, ResNet50), **fine-tuning**, strong **augmentation**, optional **denoise + CLAHE**, **Grad-CAM** explainability, **GPU memory growth** + optional **mixed precision**, CSV **training logs**, **TensorBoard**, evaluation + ROC, **batch/real-time inference**, **Streamlit**, and auto-generated **final report**.
+End-to-end **production-style** PCB defect AI: multi-class classification on **YOLO-cropped** patches,
+**custom Functional CNN**, **transfer learning** (MobileNetV2, **EfficientNetB0**, ResNet50),
+**fine-tuning**, strong **augmentation**, optional **denoise + CLAHE**, **Grad-CAM** explainability,
+CSV **training logs**, **TensorBoard**, evaluation + ROC, **Streamlit** demo app, and auto-generated report.
 
-> Raw Kaggle images + labels only (not MNIST/CIFAR loaders). ImageNet **weights** initialize backbones only.
+> Raw Kaggle images + labels only. ImageNet **weights** initialize backbones only.
 
-> **Accuracy:** Requirements such as “always >99% validation accuracy” are **not guaranteed by code** — they depend on data splits, noise, and compute. Your recorded **best_val_accuracy** in `training_summary.json` is the ground truth for grading/viva.
+---
 
 ## Repository layout
 
 ```
 PCB_Defect_Detection/
-├── dataset/                 # Default PCB dataset root (see also datasets/README.md)
-├── datasets/                # README + optional symlink/copy location
-├── models/registry/         # Place exported checkpoints for deployment tracking
+├── dataset/                 # PCB dataset root (NOT in repo — must be added manually)
+├── datasets/                # README only
+├── models/registry/         # Place exported checkpoints here
 ├── src/
-│   ├── config.py            # Paths, GPU setup, fine-tune defaults per backbone
-│   ├── data_loader.py       # YAML, YOLO manifest, class weights
+│   ├── config.py            # Paths, GPU setup, fine-tune defaults
+│   ├── data_loader.py       # YOLO manifest, class weights
 │   ├── data_analysis.py     # EDA plots
-│   ├── preprocess.py        # Crop, optional denoise/CLAHE, augment, tf.data
-│   ├── model.py             # Scratch CNN + MobileNet / EfficientNet / ResNet
-│   ├── train.py             # Full training pipeline + logs + optional Grad-CAM
+│   ├── preprocess.py        # Crop, denoise/CLAHE, augment, tf.data
+│   ├── model.py             # Scratch CNN + Transfer Learning models
+│   ├── train.py             # Full training pipeline
 │   ├── evaluate.py          # Metrics, curves, ROC
-│   ├── explainability.py    # Grad-CAM, first-layer filters (scratch)
-│   ├── predict.py           # Single-image / folder batch inference
-│   └── report_generator.py  # Assembles report/FINAL_PROJECT_REPORT.md
-├── scripts/                 # CLI wrappers
+│   ├── explainability.py    # Grad-CAM, first-layer filters
+│   ├── predict.py           # Single-image / folder inference
+│   └── report_generator.py  # Generates final report
+├── scripts/
+│   └── draw_boxes.py        # Visualize YOLO bounding boxes
 ├── notebooks/
-├── results/                 # Training outputs (per run subdirectory)
-├── report/                  # REPORT.md + generated FINAL_PROJECT_REPORT.md
+├── results/                 # Training outputs (auto-created per run)
+├── report/
 ├── presentation/
-├── app_streamlit.py
-├── train.py
+├── app_streamlit.py         # Streamlit web app
+├── train.py                 # Main training entry point
 ├── requirements.txt
 └── README.md
 ```
 
-## Installation (Windows)
+---
 
+## How to Run the Project (Step by Step)
+
+### Step 1 - Clone the repository
+
+```bash
+git clone https://github.com/ahmed-kora3/PCB_Defect_Detection.git
+cd PCB_Defect_Detection
+```
+
+---
+
+### Step 2 - Create a virtual environment
+
+**Windows (PowerShell):**
 ```powershell
-cd path\to\PCB_Defect_Detection
 python -m venv venv
 .\venv\Scripts\Activate.ps1
+```
+
+**macOS / Linux:**
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+---
+
+### Step 3 - Install dependencies
+
+```bash
 pip install -r requirements.txt
 ```
 
-Optional (architecture PNG): install [Graphviz](https://graphviz.org/download/) and `pip install pydot`.
+> This installs TensorFlow 2.15.1 (pinned for Windows compatibility).
+> Do NOT upgrade TensorFlow manually.
 
-### If TensorFlow fails to load (`DLL load failed`, `DllMain returned false`)
+---
 
-1. **`requirements.txt` pins TensorFlow 2.15.1** — reinstall:  
-   `pip uninstall -y tensorflow keras` then `pip install -r requirements.txt`
-2. Install **[VC++ Redistributable x64](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist)** (2015–2022).
-3. Very old CPUs without **AVX** may not run official TensorFlow wheels; use **WSL2** (Ubuntu) or another machine for training.
-4. Optional: `set TF_ENABLE_ONEDNN_OPTS=0` before running if oneDNN causes issues.
+### Step 4 - Add the dataset
 
-## Dataset
+Download the **PCB Defects** dataset from Kaggle and place it in this exact structure:
 
-Place the Kaggle **Printed Circuit Board (PCB) Defects** export under:
+```
+dataset/
+└── pcb-defect-dataset/
+    ├── data.yaml
+    ├── train/
+    │   ├── images/
+    │   └── labels/
+    ├── val/
+    │   ├── images/
+    │   └── labels/
+    └── test/
+        ├── images/
+        └── labels/
+```
 
-`dataset/pcb-defect-dataset/` with `data.yaml`, `train|val|test/{images,labels}/`.
+> The dataset folder is NOT included in the repository (too large).
+> Ask a team member to share it or download from Kaggle.
 
-## Quick pipeline
+---
 
-```powershell
-# 1) EDA
-python -m src.data_analysis
+### Step 5 - Train the model
 
-# 2) Train transfer + fine-tune + TensorBoard + CSV logs (+ optional advanced prep)
-python train.py --model transfer --backbone EfficientNetB0 --epochs 30 --fine-tune --tensorboard --advanced-prep
+```bash
+# Recommended: EfficientNetB0 with fine-tuning
+python train.py --model transfer --backbone EfficientNetB0 --epochs 30 --fine-tune
 
-# 3) Train scratch + one backbone + comparison table
-python train.py --model all --backbone MobileNetV2 --fine-tune --tensorboard --gradcam
+# Scratch CNN only
+python train.py --model scratch --epochs 25
 
-# 4) Train all three transfer backbones (long run) → model_comparison.md
-python train.py --train-all-backbones --epochs 25 --fine-tune --tensorboard
+# Train all backbones and generate comparison table
+python train.py --train-all-backbones --epochs 25 --fine-tune
+```
 
-# 5) GPU FP16 speed (NVIDIA): 
-python train.py --model transfer --mixed-precision --fine-tune --tensorboard
+Training outputs (model weights, metrics, logs) are saved inside `results/`.
 
-# 6) Evaluate / predict / report
-python -m src.evaluate --run-dir results/transfer_EfficientNetB0
-python -m src.predict --model results/transfer_EfficientNetB0/models/best_model.keras --image sample.jpg
-python -m src.report_generator --results-dir results
+---
 
-# 7) Streamlit (reads hyperparameters.json for crop size & advanced prep)
+### Step 6 - Launch the Streamlit app
+
+```bash
 streamlit run app_streamlit.py
 ```
 
-### Useful flags
+Then open your browser at **http://localhost:8501** and upload a PCB image.
+
+> You must train the model first (Step 5) before running the app.
+> The app looks for `.keras` model files inside `results/`.
+
+---
+
+## Troubleshooting
+
+| Problem | Solution |
+|---------|----------|
+| `DLL load failed` on Windows | Install VC++ Redistributable x64 from Microsoft |
+| TensorFlow import error | `pip uninstall -y tensorflow keras` then `pip install -r requirements.txt` |
+| `No .keras weights under results/` | Train the model first using Step 5 above |
+| `No module named streamlit` | Make sure venv is activated and requirements are installed |
+| oneDNN warning messages | Set env var `TF_ENABLE_ONEDNN_OPTS=0` (cosmetic only) |
+
+---
+
+## Other useful commands
+
+```bash
+# Exploratory data analysis
+python -m src.data_analysis
+
+# Evaluate a trained model
+python -m src.evaluate --run-dir results/transfer_EfficientNetB0
+
+# Predict on a single image
+python -m src.predict --model results/transfer_EfficientNetB0/models/best_model.keras --image sample.jpg
+
+# Generate final report
+python -m src.report_generator --results-dir results
+
+# Visualize YOLO bounding boxes on dataset images
+python scripts/draw_boxes.py --split train
+```
+
+---
+
+## Training flags
 
 | Flag | Meaning |
 |------|---------|
-| `--advanced-prep` | Denoise + CLAHE before resize (train/eval must match) |
-| `--train-all-backbones` | MobileNetV2, ResNet50, EfficientNetB0 sequentially |
-| `--gradcam` | Save explainability figures after training |
-| `--no-class-weights` | Disable balanced class weights |
-| `--cache-train` | In-memory `tf.data` cache for train (high RAM) |
-| `--save-manifests` | CSV manifests under `results/manifests/` |
+| `--model` | `scratch`, `transfer`, or `all` |
+| `--backbone` | `MobileNetV2`, `ResNet50`, `EfficientNetB0` |
+| `--epochs` | Number of training epochs |
+| `--fine-tune` | Unfreeze top backbone layers after initial training |
+| `--advanced-prep` | Enable denoise + CLAHE on crops |
+| `--tensorboard` | Save TensorBoard logs |
+| `--gradcam` | Save Grad-CAM figures after training |
+| `--train-all-backbones` | Train all 3 backbones and generate comparison table |
 
-## Training outputs (per run directory)
+---
 
-- `models/best_model.keras`, `models/final_model.keras`
-- `hyperparameters.json`, `history.json`, `training_summary.json`, `metrics.json`
-- `logs/training_log.csv` (CSVLogger), `tensorboard/` (if `--tensorboard`)
-- Curves, confusion matrix, classification report, optional ROC
-- `explainability/` when using `--gradcam`
+## Notes
 
-## Evaluation
-
-`src/evaluate.py` recomputes test metrics and plots; accepts `--run-dir` or `--model-path`.
-
-## Report & slides
-
-- **Report:** `report/REPORT.md` — all required sections; embed your `results/` screenshots after training.  
-- **Slides:** `presentation/SLIDES.md` — [Marp](https://marp.app/) (`npm i -g @marp-team/marp-cli` → `marp SLIDES.md -o slides.pdf`).
-
-## Accuracy expectations
-
-The code applies **strong augmentation**, **class weights**, **ReduceLROnPlateau**, **early stopping**, and **fine-tuning** to maximize accuracy on your hardware. **Exact** val/test numbers (e.g. 99%) are **data- and run-dependent**; cite the values from **your** `metrics.json` in the report/viva.
-
-## Academic integrity
-
-All preprocessing and label parsing are **implemented explicitly** in this repository (OpenCV + NumPy + TensorFlow), not hidden inside a black-box dataset API for PCB data.
+- 6 defect classes: `mouse_bite`, `spur`, `missing_hole`, `short`, `open_circuit`, `spurious_copper`
+- The `venv/` and `dataset/` folders are excluded from the repo via `.gitignore`
+- Training results and model weights are saved per-run in `results/<run_name>/`
