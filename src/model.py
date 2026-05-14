@@ -82,7 +82,6 @@ def build_transfer_model(
             input_shape=input_shape,
             include_top=False,
             weights="imagenet",
-            name="mobilenetv2_backbone",
         )
         preprocess = tf.keras.applications.mobilenet_v2.preprocess_input
     elif backbone == "ResNet50":
@@ -90,7 +89,6 @@ def build_transfer_model(
             input_shape=input_shape,
             include_top=False,
             weights="imagenet",
-            name="resnet50_backbone",
         )
         preprocess = tf.keras.applications.resnet50.preprocess_input
     elif backbone == "EfficientNetB0":
@@ -98,7 +96,6 @@ def build_transfer_model(
             input_shape=input_shape,
             include_top=False,
             weights="imagenet",
-            name="efficientnetb0_backbone",
         )
         preprocess = tf.keras.applications.efficientnet.preprocess_input
     else:

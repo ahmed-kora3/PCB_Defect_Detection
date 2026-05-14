@@ -71,7 +71,17 @@ def crop_and_resize(
     if advanced_preprocessing:
         patch = enhance_bgr_patch(patch, denoise=True, clahe_contrast=True)
 
-    patch = cv2.resize(patch, target_size, interpolation=cv2.INTER_AREA)
+    # INTER_AREA is best for downscaling, but when upscaling it becomes similar to
+    # nearest-neighbor (blocky/pixelated). Choose interpolation based on scale.
+    target_w, target_h = int(target_size[0]), int(target_size[1])
+    if patch.shape[1] == target_w and patch.shape[0] == target_h:
+        resized = patch
+    else:
+        scale_up = patch.shape[1] < target_w or patch.shape[0] < target_h
+        interp = cv2.INTER_CUBIC if scale_up else cv2.INTER_AREA
+        resized = cv2.resize(patch, (target_w, target_h), interpolation=interp)
+
+    patch = resized
     patch = cv2.cvtColor(patch, cv2.COLOR_BGR2RGB)
     return patch.astype("float32") / 255.0
 

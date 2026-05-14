@@ -34,6 +34,7 @@ from .model import (
     print_model_summary_and_params,
     save_architecture_diagram,
 )
+from .model_io import load_model_for_inference
 from .preprocess import build_datasets
 
 
@@ -101,7 +102,8 @@ def train_one_run(
 
     best_path = model_dir / "best_model.keras"
     final_path = model_dir / "final_model.keras"
-    callbacks: list = [
+
+    callbacks_base: list = [
         tf.keras.callbacks.ModelCheckpoint(
             filepath=str(best_path),
             monitor="val_accuracy",
@@ -122,12 +124,15 @@ def train_one_run(
             min_lr=1e-7,
             verbose=1,
         ),
-        tf.keras.callbacks.CSVLogger(str(logs_dir / "training_log.csv"), append=False),
     ]
     tb_dir = output_dir / "tensorboard"
-    if log_tensorboard:
-        tb_dir.mkdir(parents=True, exist_ok=True)
-        callbacks.append(tf.keras.callbacks.TensorBoard(log_dir=str(tb_dir), histogram_freq=0))
+
+    def _callbacks_for_fit(*, append_csv: bool) -> list:
+        callbacks: list = [*callbacks_base, tf.keras.callbacks.CSVLogger(str(logs_dir / "training_log.csv"), append=append_csv)]
+        if log_tensorboard:
+            tb_dir.mkdir(parents=True, exist_ok=True)
+            callbacks.append(tf.keras.callbacks.TensorBoard(log_dir=str(tb_dir), histogram_freq=0))
+        return callbacks
 
     hyperparams: dict[str, Any] = {
         "model_kind": model_kind,
@@ -150,7 +155,7 @@ def train_one_run(
         train_ds,
         validation_data=val_ds,
         epochs=epochs,
-        callbacks=callbacks,
+        callbacks=_callbacks_for_fit(append_csv=False),
         class_weight=class_weight,
     )
     train_time_sec = time.perf_counter() - t0
@@ -163,7 +168,7 @@ def train_one_run(
             train_ds,
             validation_data=val_ds,
             epochs=fine_tune_epochs,
-            callbacks=callbacks,
+            callbacks=_callbacks_for_fit(append_csv=True),
             class_weight=class_weight,
         )
         _merge_fit_history(history.history, history_ft)
@@ -180,7 +185,7 @@ def train_one_run(
     eval_model = model
     if best_path.exists():
         try:
-            eval_model = tf.keras.models.load_model(str(best_path))
+            eval_model = load_model_for_inference(best_path, cache_dir=output_dir / ".cache")
         except Exception:
             eval_model = model
 

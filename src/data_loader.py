@@ -106,6 +106,26 @@ def get_image_path_for_label(label_path: Path) -> Path:
     raise FileNotFoundError(f"No image found for label file: {label_path}")
 
 
+def find_label_path_for_image(image_path: Path, split: str) -> Path | None:
+    """
+    Given an image path (or any Path whose `.stem` matches the image filename stem),
+    return the corresponding YOLO label path under `DATA_ROOT/<split>/labels/` if found.
+
+    The Kaggle release sometimes uses `_256`/`_600` suffixes or other stem variants; this
+    helper mirrors `get_image_path_for_label()` by trying common stem variants.
+    """
+    if split not in SPLITS:
+        raise ValueError(f"Unsupported split {split!r}. Use one of {SPLITS}")
+    label_dir = DATA_ROOT / split / "labels"
+    if not label_dir.exists():
+        return None
+    for candidate in _stem_variants(image_path.stem):
+        p = label_dir / f"{candidate}.txt"
+        if p.exists():
+            return p
+    return None
+
+
 def build_annotation_manifest(split: str, skip_unreadable_images: bool = True) -> List[Dict]:
     """
     Build one manifest row per YOLO line (one defect instance).

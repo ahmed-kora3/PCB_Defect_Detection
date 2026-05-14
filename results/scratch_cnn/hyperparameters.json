@@ -1,0 +1,17 @@
+{
+  "model_kind": "scratch",
+  "backbone": null,
+  "image_size": [
+    224,
+    224
+  ],
+  "batch_size": 32,
+  "epochs_planned": 5,
+  "fine_tune": true,
+  "fine_tune_epochs": 2,
+  "fine_tune_at": 0,
+  "fine_tune_lr": 1e-05,
+  "advanced_preprocessing": false,
+  "class_weights": true,
+  "num_classes": 6
+}

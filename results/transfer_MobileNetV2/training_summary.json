@@ -1,12 +1,12 @@
 {
   "model_kind": "transfer",
   "backbone": "MobileNetV2",
-  "epochs_ran": 31,
-  "train_time_sec": 10667.39,
+  "epochs_ran": 7,
+  "train_time_sec": 2385.67,
   "num_parameters": 2422726,
-  "best_val_accuracy": 0.9648798704147339,
-  "best_train_accuracy": 0.9304001927375793,
-  "test_accuracy": 0.9545875810936052,
-  "test_f1_weighted": 0.9545931346783323,
-  "test_f1_macro": 0.9532200879812766
+  "best_val_accuracy": 0.9528650641441345,
+  "best_train_accuracy": 0.9107946157455444,
+  "test_accuracy": 0.953660797034291,
+  "test_f1_weighted": 0.9538103375942005,
+  "test_f1_macro": 0.9527887105886204
 }

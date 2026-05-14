@@ -32,6 +32,7 @@ from sklearn.metrics import (
 from sklearn.preprocessing import label_binarize
 
 from .data_loader import CLASS_NAMES
+from .model_io import load_model_for_inference
 from .preprocess import build_datasets
 
 
@@ -241,7 +242,7 @@ def main() -> None:
         hp = json.loads(hp_path.read_text(encoding="utf-8"))
         adv = bool(hp.get("advanced_preprocessing", adv))
 
-    model = tf.keras.models.load_model(str(model_path), safe_mode=False)
+    model = load_model_for_inference(model_path)
     hist_path = (args.run_dir or model_path.parent.parent) / "history.json"
     history = load_history_json(hist_path)
 

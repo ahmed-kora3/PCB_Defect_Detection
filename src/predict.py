@@ -14,6 +14,7 @@ import numpy as np
 import tensorflow as tf
 
 from .data_loader import CLASS_NAMES, NUM_CLASSES
+from .model_io import load_model_for_inference
 from .preprocess import crop_and_resize
 
 
@@ -48,7 +49,7 @@ def predict_folder(model_path: Path, input_dir: Path, output_csv: Path | None, b
     adv = flags.get("advanced_preprocessing", False)
     size = int(flags.get("image_size", [224, 224])[0]) if isinstance(flags.get("image_size"), list) else 224
 
-    model = tf.keras.models.load_model(str(model_path))
+    model = load_model_for_inference(model_path)
     rows = []
     for p in sorted(input_dir.glob("*")):
         if p.suffix.lower() not in (".jpg", ".jpeg", ".png"):
@@ -89,7 +90,7 @@ def main() -> None:
         flags = load_prep_flags(args.model.parent.parent)
         adv = flags.get("advanced_preprocessing", False)
         size = int(flags.get("image_size", [224, 224])[0]) if isinstance(flags.get("image_size"), list) else 224
-        model = tf.keras.models.load_model(str(args.model))
+        model = load_model_for_inference(args.model)
         bgr = cv2.imread(str(args.image))
         if bgr is None:
             sys.exit("Could not read image")
